@@ -20,9 +20,10 @@ clc
 
 % need to put fct to iterate over folder here 
 % read tiff as volume
-imgName = 'F:\Matlab\ImageProcessingTests\ExampleData\vasculature.tif';
+imgName = ('ExampleData/vasculature.tif');
 fname = tiffreadVolume(imgName);
 
+%%
 %%% Gaussian Filter %%%
 G = imgaussfilt3(fname,3);
 
@@ -32,7 +33,7 @@ OtsuBW = imbinarize(G,level);
 % make MIP
 MAX_OtsuBW = max(OtsuBW,[],3);
 % save MIP
-saveas(imshow(MAX_OtsuBW), 'F:\Matlab\ImageProcessingTests\Output\MAX_OtsuBW.png')
+saveas(imshow(MAX_OtsuBW), 'Output/MAX_OtsuBW.png')
 
 BW2 = bwmorph3(OtsuBW,'clean'); % remove single voxels
 
@@ -41,28 +42,32 @@ skel = bwskel(BW2);
 % make MIP
 MAX_skel = max(skel,[],3);
 % save MIP
-saveas(imshow(MAX_skel), 'F:\Matlab\ImageProcessingTests\Output\MAX_skel.png');
+saveas(imshow(MAX_skel), 'Output/MAX_skel.png');
+[row column] = find(skel);
+skelL       = [row column];
+cskelL = length(skelL);
+fprintf('Skeleton Length [vx]: %d \n', cskelL);
 
 %%% Count 3D Branching Points %%%
 BP = bwmorph3(skel,'branchpoints'); 
 [row column] = find(BP);
 BPs       = [row column];
 cNumBP = length(BPs);
-fprintf('%d \n', cNumBP);
+fprintf('Skeleton Branchpoints [vx]: %d \n', cNumBP);
 
 %%% Count 3D End-Points %%%
 EP = bwmorph3(skel,'endpoints'); 
 [row column] = find(EP);
 EPs       = [row column];
 cNumEP = length(EPs);
-fprintf('%d \n', cNumEP);
+fprintf('Skeleton endpoints [vx]: %d \n', cNumEP);
 
 %%
 %%% Canny Edge %%%
-cannyE = edge(BW2,'canny');
+%cannyE = edge(BW2,'canny');
 % make MIP
-MAX_cannyE = max(cannyE,[],3);
+%MAX_cannyE = max(cannyE,[],3);
 % save MIP
-saveas(imshow(cannyE), 'F:\Matlab\ImageProcessingTests\Output\MAX_cannyE.png');
+%saveas(imshow(cannyE), 'Output/MAX_cannyE.png');
 
 %%% Quantify Number of Surface Voxels %%%

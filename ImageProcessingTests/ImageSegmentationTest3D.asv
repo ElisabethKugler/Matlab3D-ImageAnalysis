@@ -1,4 +1,4 @@
-% Code to test image preprocessing steps on 3D tiffs
+% Code to test image segmentation and analysis steps on 3D tiffs
 % more info: https://uk.mathworks.com/help/images/3d-volumetric-image-processing.html?s_tid=CRUX_lftnav
 % Author: Elisabeth Kugler 2021
 % Contact: kugler.elisabeth@gmail.com
@@ -21,36 +21,49 @@ clc
 % need to put fct to iterate over folder here 
 % read tiff as volume
 imgName = ('ExampleData/vasculature.tif');
-
 fname = tiffreadVolume(imgName);
-im=im2double(fname);
-gray = (im-min(im(:)))./(max(im(:))-min(im(:)));
-    
-%%% Contrast Enhancement %%%
-CE = histeq(fname);
-% make MIP 
-MAX_CE = max(CE,[],3);
-% save MIP
-saveas(imshow(MAX_CE), 'Output/MAX_CE.png')
 
-%%% Median Filter %%%
-MF = medfilt3(fname,[3 3 3]); % x,y,z sigma    
-% make MIP 
-MAX_MF = max(MF,[],3);
-% save MIP
-saveas(imshow(MAX_MF), 'Output/MAX_MF.png')
-
+%%
 %%% Gaussian Filter %%%
 G = imgaussfilt3(fname,3);
-% make MIP 
-MAX_G = max(G,[],3);
-% save MIP
-saveas(imshow(MAX_G), 'Output/MAX_G.png')
 
-%%% Extract and Remove Background %%%
-background = imopen(fname,strel('disk',30));
-RemBG = fname - background;
+%%% Otsu's thresholding %%%
+level = graythresh(G);
+OtsuBW = imbinarize(G,level);
 % make MIP
-MAX_RemBG = max(RemBG,[],3);
+MAX_OtsuBW = max(OtsuBW,[],3);
 % save MIP
-saveas(imshow(MAX_RemBG), 'Output/MAX_RemBG.png')
+saveas(imshow(MAX_OtsuBW), 'Output/MAX_OtsuBW.png')
+
+BW2 = bwmorph3(OtsuBW,'clean'); % remove single voxels
+
+%%% Skeletonization %%%
+skel = bwskel(BW2);
+% make MIP
+MAX_skel = max(skel,[],3);
+% save MIP
+saveas(imshow(MAX_skel), 'Output/MAX_skel.png');
+
+%%% Count 3D Branching Points %%%
+BP = bwmorph3(skel,'branchpoints'); 
+[row column] = find(BP);
+BPs       = [row column];
+cNumBP = length(BPs);
+fprintf('%d \n', cNumBP);
+
+%%% Count 3D End-Points %%%
+EP = bwmorph3(skel,'endpoints'); 
+[row column] = find(EP);
+EPs       = [row column];
+cNumEP = length(EPs);
+fprintf('%d \n', cNumEP);
+
+%%
+%%% Canny Edge %%%
+%cannyE = edge(BW2,'canny');
+% make MIP
+%MAX_cannyE = max(cannyE,[],3);
+% save MIP
+%saveas(imshow(cannyE), 'Output/MAX_cannyE.png');
+
+%%% Quantify Number of Surface Voxels %%%
