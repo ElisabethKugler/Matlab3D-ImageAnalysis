@@ -42,17 +42,14 @@ skeletonAnalysis(BW2, 'Otsu');
 %%
 %%% Canny Edge %%%
 cannyE = edge3(BW2,'approxcanny', 0.5);
+
 % make MIP
 MAX_cannyE = max(cannyE,[],3);
+imshow(cannyE);
 % save MIP
-MIPs(MAX_cannyE,'CannyE');
+%saveas(imshow(cannyE), 'Output/MAX_cannyE.png');
 
 %%% Quantify Number of Surface Voxels %%%
-[row column] = find(cannyE);
-cannyEs      = [row column];
-cNumCE = length(cannyEs);
-fprintf('Surface [vx]: %d \n',cNumCE);
-
 
 function MIPs = MIPs(img,saveName)
     str_saveas = 'Output/MAX_%s.png';
