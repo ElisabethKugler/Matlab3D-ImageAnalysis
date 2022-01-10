@@ -18,39 +18,40 @@ clearvars
 close all
 clc
 
-% need to put fct to iterate over folder here 
+%% open images 
+% need to put fct to iterate over folder here  -- TODO
 % read tiff as volume
 imgName = ('ExampleData/vasculature.tif');
 fname = tiffreadVolume(imgName);
 
+% Get Voxel Volume -- TODO
+
 %%% Gaussian Filter %%%
 G = imgaussfilt3(fname,3);
 
-%% Otsu Thresholding
-%%% Otsu's thresholding %%%
+%% Otsu Thresholding %%
 level = graythresh(G);
 OtsuBW = imbinarize(G,level);
+% volshow(OtsuBW); % show volume
 % make Maximum Intensity Projections (MIP)
 MAX_OtsuBW = max(OtsuBW,[],3);
 % save MIP
 MIPs(MAX_OtsuBW,'Otsu'); % call fct to make MIPs; (a,b) = (which image, which name)
-
+% analyse data
 BW2 = bwmorph3(OtsuBW,'clean'); % remove single voxels
-
 skeletonAnalysis(BW2, 'Otsu');
+EdgeDetection(BW2);
 
-%%
-%%% Canny Edge %%%
-cannyE = edge3(BW2,'approxcanny', 0.5);
+% %% kMeans clustering
+% computationally intense
+% H = fibermetric(G,20); % enhances elongated / tubular structures using the Hessian matrix - computationally intense: https://uk.mathworks.com/help/images/ref/fibermetric.html
+% kMeans = imsegkmeans3(H,5);
+% % figure, volshow(kMeans);
+% MAX_kMeans = max(kMeans,[],3);
+% % save MIP
+% MIPs(MAX_kMeans,'kMeans'); % call fct to make MIPs; (a,b) = (which image, which name)
 
-% make MIP
-MAX_cannyE = max(cannyE,[],3);
-imshow(cannyE);
-% save MIP
-%saveas(imshow(cannyE), 'Output/MAX_cannyE.png');
-
-%%% Quantify Number of Surface Voxels %%%
-
+%% FUNCTIONS %%
 function MIPs = MIPs(img,saveName)
     str_saveas = 'Output/MAX_%s.png';
     % z = 'OtsuBW';
@@ -66,8 +67,8 @@ function skeletonAnalysis = skeletonAnalysis(imageIn, segmentationType)
     % save MIP
     MIPs(MAX_skel,'Skel');
     % Count skel length
-    [row column] = find(skel);
-    skelL       = [row column];
+    [row, column] = find(skel);
+    skelL       = [row, column];
     cskelL = length(skelL);
     fprintf('Skeleton Length %s Thresholding [vx]: %d \n',segmentationType,cskelL);
     
@@ -77,8 +78,8 @@ function skeletonAnalysis = skeletonAnalysis(imageIn, segmentationType)
     % save MIP
     MIPs(MAX_BP,'BP');
     % Count BPs
-    [row column] = find(BP);
-    BPs       = [row column];
+    [row, column] = find(BP);
+    BPs       = [row, column];
     cNumBP = length(BPs);
     fprintf('Skeleton Branchpoints %s Thresholding [vx]: %d \n',segmentationType,cNumBP);
     
@@ -88,9 +89,24 @@ function skeletonAnalysis = skeletonAnalysis(imageIn, segmentationType)
     % save MIP
     MIPs(MAX_EP,'EP');
     % Count EPs
-    [row column] = find(EP);
-    EPs       = [row column];
+    [row, column] = find(EP);
+    EPs       = [row, column];
     cNumEP = length(EPs);
     fprintf('Skeleton Endpoints %s Thresholding [vx]: %d \n',segmentationType,cNumEP);
 
+end
+
+function EdgeDetection = EdgeDetection(inName)
+    %%% Canny Edge %%%
+    cannyE = edge3(inName,'approxcanny', 0.5);
+    % make MIP
+    MAX_cannyE = max(cannyE,[],3);
+    % save MIP
+    MIPs(MAX_cannyE,'CannyE');
+    
+    %%% Quantify Number of Surface Voxels %%%
+    [row, column] = find(cannyE);
+    cannyEs      = [row, column];
+    cNumCE = length(cannyEs);
+    fprintf('Surface [vx]: %d \n',cNumCE);
 end
