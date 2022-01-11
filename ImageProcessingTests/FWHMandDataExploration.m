@@ -42,8 +42,9 @@ index1 = find(data >= halfMax, 1, 'first');
 index2 = find(data >= halfMax, 1, 'last');
 FWHM = index2-index1 + 1; % FWHM in indexes.
 
-%%
+%% Print out output FWHM
+% print in voxel
 fprintf('FWHM in voxel: %d \n', FWHM);
-
+% print in micrometer
 fwhmMicrons = FWHM * voxelSize; 
 fprintf('FWHM in microns: %d \n', fwhmMicrons);
